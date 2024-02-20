@@ -4,13 +4,13 @@
 
 ## Vietnamese Dictionary
 
-This is a Vietnamese Chu Nom dictionary app built with Elm. It is a work in progress.
+This is a Vietnamese Chữ Nôm dictionary app built with Elm. It is a work in progress.
 It is a simple search over the list of words found at [ChuNom.org](https://chunom.org/pages/standard-list/?max=2000&download=1).
 
 ## Features
 
-- [X] Search for words in Vietnamese Quoc Ngu and get the corresponding Chu Nom.
-- [X] Search for words in Chu Nom and get the corresponding Vietnamese Quoc Ngu.
+- [X] Search for words in Vietnamese Quốc Ngữ and get the corresponding Chữ Nôm.
+- [X] Search for words in Chữ Nôm and get the corresponding Vietnamese Quốc Ngữ.
 
 ## Local development
 
