@@ -19,6 +19,8 @@ It is a simple search over the list of words found at [ChuNom.org](https://chuno
 npx elm-land server
 ```
 
-## Deploying to production
+## Building and using the app
 
 Run `bash dist.sh` to build the app. The output will be in the `dist` folder.
+
+The app can be used by opening [http://localhost:8080](http://localhost:8080) in a web browser.
