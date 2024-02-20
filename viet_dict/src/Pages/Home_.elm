@@ -38,10 +38,7 @@ type alias Words =
 
 
 type alias Word =
-    { id : String
-    , unicode : String
-    , freq : Int
-    , han : String
+    { han : String
     , quoc_ngu : String
     , english : String
     }
@@ -54,10 +51,7 @@ wordsDecoder =
 
 wordDecoder : Json.Decode.Decoder Word
 wordDecoder =
-    Json.Decode.map6 Word
-        (Json.Decode.field "id" Json.Decode.string)
-        (Json.Decode.field "unicode" Json.Decode.string)
-        (Json.Decode.field "freq" Json.Decode.int)
+    Json.Decode.map3 Word
         (Json.Decode.field "han" Json.Decode.string)
         (Json.Decode.field "quoc_ngu" Json.Decode.string)
         (Json.Decode.field "english" Json.Decode.string)
@@ -108,14 +102,15 @@ init () =
 
 type Msg
     = GotWords (Result Http.Error Words)
-    | Change String
+    | QNChange String
+    | CNChange String
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
 update msg model =
     case msg of
         GotWords (Ok words) ->
-            ( { model | receivedWords = Success words }
+            ( { model | receivedWords = Success <| unique words }
             , Effect.none
             )
 
@@ -124,7 +119,7 @@ update msg model =
             , Effect.none
             )
 
-        Change string ->
+        QNChange string ->
             let
                 newWords =
                     case model.receivedWords of
@@ -140,6 +135,53 @@ update msg model =
             ( { model | searchString = string, words = newWords }
             , Effect.none
             )
+
+        CNChange string ->
+            let
+                newWords =
+                    case model.receivedWords of
+                        Success wordList ->
+                            List.filter (\word -> String.contains string word.han) wordList
+
+                        Loading ->
+                            []
+
+                        Failure err ->
+                            []
+            in
+            ( { model | searchString = string, words = newWords }
+            , Effect.none
+            )
+
+
+unique : List a -> List a
+unique l =
+    let
+        incUnique : a -> List a -> List a
+        incUnique elem lst =
+            case List.member elem lst of
+                True ->
+                    lst
+
+                False ->
+                    elem :: lst
+    in
+    List.foldr incUnique [] l
+
+
+filterListBy : String -> String -> Words -> Words
+filterListBy filter string list =
+    case string of
+        "QN" ->
+            List.filter (\word -> String.contains string word.quoc_ngu) list
+                |> unique
+
+        "CN" ->
+            List.filter (\word -> String.contains string word.han) list
+                |> unique
+
+        _ ->
+            list
 
 
 
@@ -160,7 +202,9 @@ view model =
     { title = "Pages.Home_"
     , body =
         [ Html.div []
-            [ Html.input [ onInput Change ] [] ]
+            [ Html.div [] [ Html.text "Quoc Ngu: " ], Html.input [ onInput QNChange ] [] ]
+        , Html.div []
+            [ Html.div [] [ Html.text "Chu Nom: " ], Html.input [ onInput CNChange ] [] ]
         , if String.isEmpty model.searchString then
             Html.text ""
 
