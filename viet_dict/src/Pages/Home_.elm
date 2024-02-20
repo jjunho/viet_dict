@@ -1,11 +1,12 @@
 module Pages.Home_ exposing (Model, Msg, page)
 
+import Browser.Dom exposing (Element)
 import Effect exposing (Effect)
-import Html
-import Html.Events exposing (onInput)
+import Element exposing (Element, centerX, column, el, fill, maximum, spacing, width)
+import Element.Input
 import Http
 import Json.Decode
-import Page exposing (Page)
+import Page exposing (Page, element)
 import Route exposing (Route)
 import Shared
 import String exposing (words)
@@ -66,15 +67,6 @@ getWords =
         |> Effect.sendCmd
 
 
-searchWord : String -> Effect Msg
-searchWord word =
-    Http.get
-        { url = "http://localhost:3000/words?quoc_ngu=" ++ word
-        , expect = Http.expectJson GotWords wordsDecoder
-        }
-        |> Effect.sendCmd
-
-
 
 -- INIT
 
@@ -102,8 +94,7 @@ init () =
 
 type Msg
     = GotWords (Result Http.Error Words)
-    | QNChange String
-    | CNChange String
+    | Change String
 
 
 update : Msg -> Model -> ( Model, Effect Msg )
@@ -114,39 +105,24 @@ update msg model =
             , Effect.none
             )
 
-        GotWords (Err err) ->
+        GotWords (Err _) ->
             ( { model | receivedWords = Failure "Error" }
             , Effect.none
             )
 
-        QNChange string ->
+        Change string ->
             let
                 newWords =
                     case model.receivedWords of
                         Success wordList ->
                             List.filter (\word -> String.contains string word.quoc_ngu) wordList
+                                ++ List.filter (\word -> String.contains string word.han) wordList
+                                |> unique
 
                         Loading ->
                             []
 
-                        Failure err ->
-                            []
-            in
-            ( { model | searchString = string, words = newWords }
-            , Effect.none
-            )
-
-        CNChange string ->
-            let
-                newWords =
-                    case model.receivedWords of
-                        Success wordList ->
-                            List.filter (\word -> String.contains string word.han) wordList
-
-                        Loading ->
-                            []
-
-                        Failure err ->
+                        Failure _ ->
                             []
             in
             ( { model | searchString = string, words = newWords }
@@ -159,29 +135,13 @@ unique l =
     let
         incUnique : a -> List a -> List a
         incUnique elem lst =
-            case List.member elem lst of
-                True ->
-                    lst
+            if List.member elem lst then
+                lst
 
-                False ->
-                    elem :: lst
+            else
+                elem :: lst
     in
     List.foldr incUnique [] l
-
-
-filterListBy : String -> String -> Words -> Words
-filterListBy filter string list =
-    case string of
-        "QN" ->
-            List.filter (\word -> String.contains string word.quoc_ngu) list
-                |> unique
-
-        "CN" ->
-            List.filter (\word -> String.contains string word.han) list
-                |> unique
-
-        _ ->
-            list
 
 
 
@@ -199,37 +159,60 @@ subscriptions _ =
 
 view : Model -> View Msg
 view model =
-    { title = "Pages.Home_"
-    , body =
-        [ Html.div []
-            [ Html.div [] [ Html.text "Quoc Ngu: " ], Html.input [ onInput QNChange ] [] ]
-        , Html.div []
-            [ Html.div [] [ Html.text "Chu Nom: " ], Html.input [ onInput CNChange ] [] ]
-        , if String.isEmpty model.searchString then
-            Html.text ""
-
-          else
-            showWords model
-        ]
+    { title = "Chu Nom"
+    , attributes = [] --Element.explain Debug.todo ]
+    , element = element model
     }
 
 
-showWord : Word -> Html.Html msg
-showWord word =
-    tableRow
-        [ Html.text word.han
-        , Html.text word.quoc_ngu
-        , Html.text word.english
+element : Model -> Element Msg
+element model =
+    let
+        title =
+            column [ width fill, spacing 20 ]
+                [ el [ centerX ]
+                    (Element.text "Từ điển chữ Nôm (dựa trên danh sách từ của ChuNom.org)")
+                , el [ centerX ]
+                    (Element.text "詞典𡦂喃(豫𨕭名册自𧵑ChuNom.org)")
+                ]
+
+        textInputOptions m =
+            { onChange = Change
+            , text = m.searchString
+            , placeholder = Just (Element.Input.placeholder [] (Element.text "Chữ Quốc ngữ hoặc Chữ Nôm 𡦂國語或𡦂喃"))
+            , label = Element.Input.labelLeft [] (Element.text "Tìm kiếm 尋劍:")
+            }
+
+        textInput m =
+            Element.Input.text [ spacing 40, width (fill |> maximum 1000), centerX ] (textInputOptions m)
+
+        results m =
+            let
+                showWords m_ =
+                    Element.table [ width (fill |> maximum 1000), centerX ] (tableOptions m_)
+
+                tableOptions m_ =
+                    { data = m_.words
+                    , columns =
+                        [ { header = Element.text "Chữ Nôm"
+                          , width = fill
+                          , view = \word -> Element.text word.han
+                          }
+                        , { header = Element.text "Chữ Quốc ngữ"
+                          , width = fill
+                          , view = \word -> Element.text word.quoc_ngu
+                          }
+                        ]
+                    }
+            in
+            if String.isEmpty m.searchString then
+                Element.none
+
+            else
+                showWords m
+    in
+    column [ width fill, spacing 20 ]
+        [ title
+        , textInput model
+        , results model
         ]
-
-
-tableRow : List (Html.Html msg) -> Html.Html msg
-tableRow items =
-    Html.tr []
-        (List.map (\item -> Html.td [] [ item ]) items)
-
-
-showWords : Model -> Html.Html msg
-showWords model =
-    Html.table []
-        (List.map showWord model.words)

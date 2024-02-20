@@ -10,7 +10,7 @@ It is a simple search over the list of words found at [ChuNom.org](https://chuno
 ## Features
 
 - [X] Search for words in Vietnamese Quoc Ngu and get the corresponding Chu Nom.
-- [ ] Search for words in Chu Nom and get the corresponding Vietnamese Quoc Ngu.
+- [X] Search for words in Chu Nom and get the corresponding Vietnamese Quoc Ngu.
 
 ## Local development
 
