@@ -173,7 +173,7 @@ element model =
                 [ el [ centerX ]
                     (Element.text "Từ điển chữ Nôm (dựa trên danh sách từ của ChuNom.org)")
                 , el [ centerX ]
-                    (Element.text "詞典𡦂喃(豫𨕭名册自𧵑ChuNom.org)")
+                    (Element.text "詞典𡦂喃(豫𨕭名册詞𧵑ChuNom.org)")
                 ]
 
         textInputOptions m =
@@ -201,6 +201,10 @@ element model =
                         , { header = Element.text "Chữ Quốc ngữ"
                           , width = fill
                           , view = \word -> Element.text word.quoc_ngu
+                          }
+                        , { header = Element.text "English"
+                          , width = fill
+                          , view = \word -> Element.text word.english
                           }
                         ]
                     }
